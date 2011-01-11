@@ -1,0 +1,94 @@
+<?php
+
+  function traffy_menu() {
+     
+    $items['traffy/hello'] = array(
+        'title' => 'Hello Traffy API testing on Drupal7.0',
+        'description' => 'Testing traffy api on Drupal7.0',
+        'page callback' => 'hello_traffy',
+        'access arguments' => array('access content'),
+        'type' => MENU_CALLBACK,
+    );
+
+    $items['traffy/test/getCCTV'] = array(
+        'title' => 'Traffy API CCTV testing',
+        'description' => 'Testing traffy CCTV api on drupal7',
+        'page callback' => 'test_getCCTV',
+        'access arguments' => array('access content'),
+        'type' => MENU_CALLBACK,
+    );
+     
+    $items['admin/traffy/settings'] = array(
+        'title' => 'Traffy API configuration',
+        'description' => 'Testing traffy api with drupal7',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('traffy_admin_settings'),
+        'access arguments' => array('administer site configuration'),
+        'file' => 'traffy.admin.inc',
+        'menu_name' => 'traffy',
+    );
+
+    return $items;
+  }
+
+  function hello_traffy() {
+    return "Hello drupal by api traffy!";
+  }
+
+  function test_getCCTV ($data_method = 'JSON') {
+    $api_service = variable_get('traffy_service_url', 'http://api.traffy.in.th/apis/apitraffy.php');
+    $apikey = variable_get('traffy_apikey', '');
+    $appid= variable_get('traffy_appid', '');
+    $api_to_call = 'getCCTV';
+    $data_method = 'JSON';
+
+    $url= $api_service."?format=$data_method&api=$api_to_call&key=$apikey&appid=$appid";
+    $options = array(
+      'headers' => get_http_headers(), 
+      'method' => 'POST', 
+      'data' => NULL, 
+      'max_redirects' => 3, 
+      'timeout' => 10.0, 
+      'context' => NULL, 
+    ); 
+
+      $ret = '';
+      $res = drupal_http_request($url, $options); 
+      if ($res->code != 200 ) {
+        drupal_set_message($res->error, 'error');
+        $ret = 'error '. $res->code .': ' . $res->error;
+      }
+      else {
+        $raw_json = $res->data;
+        /**
+          *  I CAN'T PARSE JSON !!!!
+          *  Return javascript code,,, : ((( 
+          *
+          */
+        $ret = "<script> 
+          jQuery(document).ready(function() { 
+            jQuery('#content').append('<div id=\'traffy\'> <div class=\'loading\'>Loading</div> </div>');
+            var c = ". $raw_json ."
+            jQuery.each(c[0], function(k, v) {
+              var img_ele = jQuery('<img />'); img_ele.attr('src', v.url);
+              jQuery('#traffy').append(img_ele);
+              console.log(k, v);
+            });
+            jQuery('.loading').remove();
+          });
+        </script>";
+      }
+
+      return $ret; 
+  }
+  
+  function get_http_headers () {
+    $host = $_SERVER['SERVER_NAME'];
+    $headers = array(
+        'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
+        'Host' => $host, 
+        'Referer' => 'http://'.$host,
+    ); 
+    return $headers;
+  }
+
