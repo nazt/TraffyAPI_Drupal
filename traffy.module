@@ -72,7 +72,9 @@
             jQuery.each(c[0], function(k, v) {
               var img_ele = jQuery('<img />'); img_ele.attr('src', v.url);
               jQuery('#traffy').append(img_ele);
-              console.log(k, v);
+              if(typeof(console) !== 'undefined' && console != null) {
+                console.log(k, v);
+              }
             });
             jQuery('.loading').remove();
           });
