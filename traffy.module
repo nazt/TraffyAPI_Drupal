@@ -2,31 +2,18 @@
 
   function traffy_menu() {
 
-    $items['traffy/hello'] = array(
-        'title' => 'Hello Traffy API testing on Drupal7.0',
-        'description' => 'Testing traffy api on Drupal7.0',
-        'page callback' => 'hello_traffy',
-        'access arguments' => array('access content'),
-        'type' => MENU_CALLBACK,
-    );
-
-    $items['traffy/test/getCCTV'] = array(
+    $items['traffy/test/%'] = array(
         'title' => 'Traffy API CCTV testing',
         'description' => 'Testing traffy CCTV api on drupal7',
-        'page callback' => 'test_getCCTV',
+        'page callback' => 'test_api',
+        'page arguments' => array(2),
         'access arguments' => array('access content'),
         'type' => MENU_CALLBACK,
     );
 
-    $items['traffy/test/getCCTVJSONPWrapper/%'] = array(
-        'title' => 'Traffy API CCTV testing',
-        'description' => 'Testing traffy CCTV api on drupal7',
-        'page callback' => 'test_getCCTV_JSONP_wrapper',
-        'page arguments' => array(3),
-        'access arguments' => array('access content'),
-        'type' => MENU_CALLBACK,
-    );
-
+    
+    $items['traffy/wrapper/%'] = $items['traffy/test/%']; 
+      
     $items['admin/traffy/settings'] = array(
         'title' => 'Traffy API configuration',
         'description' => 'Testing traffy api with drupal7',
@@ -36,18 +23,14 @@
         'file' => 'traffy.admin.inc',
         'menu_name' => 'traffy',
     );
-    /**
-      * TODO
-      */
-    $items['traffy/test/wrapper/%/%'] = array(
-        'title' => 'Wrapper',
-        'descript' => 'API Wrapper',
-        'page callback' => 'test_wrapper',
-        'page arguments' => array(3,4),
+   
+    $items['traffy/hello'] = array(
+        'title' => 'Hello Traffy API testing on Drupal7.0',
+        'description' => 'Testing traffy api on Drupal7.0',
+        'page callback' => 'hello_traffy',
         'access arguments' => array('access content'),
         'type' => MENU_CALLBACK,
     );
-
     return $items;
   }
 
