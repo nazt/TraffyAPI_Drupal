@@ -1,7 +1,7 @@
 ; $Id$
 name = Traffy 
 description = "Traffy API On Drupal7.0"
-version = 0.1-alpha
+version = 0.2-alpha
 core = 7.x
 package = NAzT 
 configure = admin/traffy/settings 
