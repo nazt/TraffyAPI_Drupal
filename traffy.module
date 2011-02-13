@@ -1,7 +1,5 @@
 <?php
-
   function traffy_menu() {
-
     $items['traffy/test/%'] = array(
         'title' => 'Traffy API CCTV testing',
         'description' => 'Testing traffy CCTV api on drupal7',
@@ -11,7 +9,6 @@
         'access arguments' => array('access content'),
         'type' => MENU_CALLBACK,
     );
-
     $items['traffy/wrapper/%'] = array(
         'title' => 'Traffy api wrapper',
         'description' => 'Wrap them in!!',
@@ -20,7 +17,6 @@
         'access arguments' => array('access content'),
         'type' => MENU_CALLBACK,
     );
-
     $items['admin/traffy/settings'] = array(
         'title' => 'Traffy API configuration',
         'description' => 'Testing traffy api with drupal7',
