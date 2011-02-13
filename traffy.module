@@ -39,7 +39,6 @@
     $api_to_call = api_transform($api_to_call);
     $traffy  = get_api_info();
     $link_opts = array_merge(array('api' => $api_to_call), get_link_option());
-    //drupal_add_http_header('Content-Type', 'image/jpeg');
     if (!isset($_GET['format'])) {
       $_GET['format'] = "JSON";
     }
@@ -114,6 +113,13 @@
     return $headers;
   }
 
+  function allow_api($api) {
+    $api = strtolower($api);
+    //pessimistic strict usage!
+    $allow_api = array('getcctv', 'getvms', 'getcctvimg', 'getvmsimg', 'getincident', 'getlinkallinfo', 'getrainforecast', 'gettrafficcongestion', 'getlinkinfo', 'gettraveltime');
+    return in_array($api, $allow_api);
+  }
+
   function get_header_mapping($type) {
     $type = strtolower($type);
     $map = array(
@@ -156,15 +162,3 @@
     }
     return $api;
   }
-
-  function allow_api($api) {
-    $api = strtolower($api);
-    //optimistic
-    //$not_allow_api = array('postgpsdata', 'postincident');
-
-    //pessimistic
-    $allow_api = array('getcctv', 'getvms', 'getcctvimg', 'getvmsimg', 'getincident', 'getlinkallinfo', 'getrainforecast', 'gettrafficcongestion', 'getlinkinfo', 'gettraveltime');
-    return in_array($api, $allow_api);
-  }
-
-
