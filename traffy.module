@@ -149,8 +149,6 @@
 
   function allow_api($api) {
     $api = strtolower($api);
-    //$allow_api_as_string = 'getcctv, getvms, getcctvimg, getvmsimg, getincident, getlinkallinfo, getrainforecast, gettrafficcongestion,
-
     //optimistic
     //$not_allow_api = array('postgpsdata', 'postincident');
 
