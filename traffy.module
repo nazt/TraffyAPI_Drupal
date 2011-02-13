@@ -36,6 +36,7 @@
       return '';
     }
 
+    $api_to_call = api_transform($api_to_call);
     $traffy  = get_api_info();
     $link_opts = array_merge(array('api' => $api_to_call), get_link_option());
     //drupal_add_http_header('Content-Type', 'image/jpeg');
@@ -125,7 +126,7 @@
                   'javascript' => 'application/javascript',
                   'js' => 'application/javascript',
                   'json' => 'application/json',
-           );
+                );
 
     $mapping_status = FALSE;
     if (in_array($type, array_keys($map))) {
@@ -134,13 +135,15 @@
     return $mapping_status;
   }
 
-  function get_api_mapping($api) {
+  function api_transform($api) {
     $api = strtolower($api);
-    $map = array(
-                  'getcctvimg' => 'getcctvimg',
+    $map = array( 'getcctvimg' => 'getcctvimg',
                   'getvmsimg' => 'getvmsimg',
-          );
-    return $map[$api];
+                );
+    if (in_array($type, array_keys($map))) {
+      $api = $map[$api];
+    }
+    return $api;
   }
 
   function allow_api($api) {
