@@ -138,7 +138,18 @@
   function api_transform($api) {
     $api = strtolower($api);
     $map = array( 'getcctvimg' => 'getcctvimg',
+                  'getcctv' => 'getCCTV',
+                  'getvms' => 'getVMS',
                   'getvmsimg' => 'getvmsimg',
+                  'getincident', => 'getIncident',
+                  'getlinkallinfo' => 'getLinkAllInfo',
+                  'getrainforecast' => 'getRainForecast',
+                  'getTrafficCongestion' => 'getCL',
+                  'getlinkinfo' => 'getLinkInfo',
+                  'gettraveltime' => 'getTravelTime',
+                   //postAPI
+                  'postgpsdata' => 'postGPSData',
+                  'postincident' => 'postIncident',
                 );
     if (in_array($api, array_keys($map))) {
       $api = $map[$api];
