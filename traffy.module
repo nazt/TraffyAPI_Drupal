@@ -140,7 +140,7 @@
     $map = array( 'getcctvimg' => 'getcctvimg',
                   'getvmsimg' => 'getvmsimg',
                 );
-    if (in_array($type, array_keys($map))) {
+    if (in_array($api, array_keys($map))) {
       $api = $map[$api];
     }
     return $api;
