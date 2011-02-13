@@ -12,17 +12,15 @@
         'type' => MENU_CALLBACK,
     );
 
-   /* 
-    $items['traffy/wrapper/%'] = array( 
-        'title' => 'Traffy API CCTV testing',
-        'description' => 'Testing traffy CCTV api on drupal7',
+    $items['traffy/wrapper/%'] = array(
+        'title' => 'Traffy api wrapper',
+        'description' => 'Wrap them in!!',
         'page callback' => 'api_wrapper',
         'page arguments' => array(2),
         'access arguments' => array('access content'),
         'type' => MENU_CALLBACK,
     );
-    */
-      
+
     $items['admin/traffy/settings'] = array(
         'title' => 'Traffy API configuration',
         'description' => 'Testing traffy api with drupal7',
@@ -32,38 +30,133 @@
         'file' => 'traffy.admin.inc',
         'menu_name' => 'traffy',
     );
-   
-    $items['traffy/hello'] = array(
-        'title' => 'Hello Traffy API testing on Drupal7.0',
-        'description' => 'Testing traffy api on Drupal7.0',
-        'page callback' => 'hello_traffy',
-        'access arguments' => array('access content'),
-        'type' => MENU_CALLBACK,
-    );
+
     return $items;
   }
 
-  function hello_traffy() {
-    return "Hello drupal by api traffy!";
+  function api_wrapper($api_to_call) {
+    if (!allow_api($api_to_call)) {
+      drupal_set_message($api_to_call . ' is not allowed.', 'error');
+      return '';
+    }
+
+    $traffy  = get_api_info();
+    $link_opts = array_merge(array('api' => $api_to_call), get_link_option());
+    //drupal_add_http_header('Content-Type', 'image/jpeg');
+    if (!isset($_GET['format'])) {
+      $_GET['format'] = "JSON";
+    }
+
+    foreach ($_GET as $key => $value) {
+      if ($key != 'q') {
+        $link_opts[$key] = $value;
+      }
+    }
+
+    $url = url($traffy['service'], array('query' => $link_opts));
+    $options = array(
+      'headers' => get_http_headers(),
+      'method' => 'POST',
+      'data' => NULL,
+      'max_redirects' => 3,
+      'timeout' => 10.0,
+      'context' => NULL,
+    );
+    $ret = '';
+    $res = drupal_http_request($url, $options);
+    if ($res->code != 200 ) {
+      drupal_set_message(print_r($res, 1), 'error');
+      drupal_set_message($res->error, 'error');
+      $ret = 'error '. $res->code .': ' . $res->error;
+    }
+    else {
+      $ret = $res->data;
+    }
+
+    $hdr_type = get_header_mapping(arg(3));
+    if ($hdr_type) {
+      drupal_add_http_header('Content-Type', $hdr_type);
+    }
+    print $ret;
+
   }
 
+  function get_link_option() {
+    $traffy  = get_api_info();
+    $link_opts = array('appid' => $traffy['appid'],
+                       'key' => $traffy['apikey'],
+                      );
+    if (!isset($_GET['format'])) {
+      $_GET['format'] = "JSON";
+    }
+
+    foreach ($_GET as $key => $value) {
+      if ($key != 'q') {
+        $link_opts[$key] = $value;
+      }
+    }
+    return $link_opts;
+  }
   function get_api_info() {
     $api_service = variable_get('traffy_service_url', 'http://athena.traffy.in.th/apis/apitraffy.php');
     $apikey = variable_get('traffy_apikey', '');
     $appid= variable_get('traffy_appid', '');
-    $traffy = array('service' => $api_service, 
+    $traffy = array('service' => $api_service,
                  'apikey' => $apikey,
                  'appid' => $appid,
                 );
-    return $traffy; 
-  }  
+    return $traffy;
+  }
   function get_http_headers () {
     $host = $_SERVER['SERVER_NAME'];
     $headers = array(
         'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-        'Host' => $host, 
+        'Host' => $host,
         'Referer' => 'http://'.$host,
-    ); 
+    );
     return $headers;
   }
+
+  function get_header_mapping($type) {
+    $type = strtolower($type);
+    $map = array(
+                  'img' => 'image/jpeg',
+                  'image' => 'image/jpeg',
+                  'png' => 'image/png',
+                  'jpeg' => 'image/jpeg',
+                  'html' => 'text/html',
+                  'xml' => 'text/xml',
+                  'javascript' => 'application/javascript',
+                  'js' => 'application/javascript',
+                  'json' => 'application/json',
+           );
+
+    $mapping_status = FALSE;
+    if (in_array($type, array_keys($map))) {
+      $mapping_status = $map[$type];
+    }
+    return $mapping_status;
+  }
+
+  function get_api_mapping($api) {
+    $api = strtolower($api);
+    $map = array(
+                  'getcctvimg' => 'getcctvimg',
+                  'getvmsimg' => 'getvmsimg',
+          );
+    return $map[$api];
+  }
+
+  function allow_api($api) {
+    $api = strtolower($api);
+    //$allow_api_as_string = 'getcctv, getvms, getcctvimg, getvmsimg, getincident, getlinkallinfo, getrainforecast, gettrafficcongestion,
+
+    //optimistic
+    //$not_allow_api = array('postgpsdata', 'postincident');
+
+    //pessimistic
+    $allow_api = array('getcctv', 'getvms', 'getcctvimg', 'getvmsimg', 'getincident', 'getlinkallinfo', 'getrainforecast', 'gettrafficcongestion', 'getlinkinfo', 'gettraveltime');
+    return in_array($api, $allow_api);
+  }
+
 
