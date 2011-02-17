@@ -43,15 +43,15 @@
     if (!isset($_GET['format'])) {
       $_GET['format'] = "JSON";
     }
-    
+
     $_GET['format'] = strtoupper($_GET['format']);
 
     foreach ($_GET as $key => $value) {
-      if ($key != 'q') {
+      if ($key != 'q' && $q != 'header') {
         $link_opts[$key] = $value;
       }
     }
-    
+
     $url = url($traffy['service'], array('query' => $link_opts));
 
     //BADLY FIX drupal's url() problem
@@ -77,8 +77,8 @@
       $ret = $res->data;
     }
 
-    $hdr_type = get_header_mapping(arg(3));
-    if ($hdr_type) {
+    $arg_hdr = arg(3)? arg(3) : $_GET['header'];
+    if ($hdr_type = get_header_mapping($arg_hdr)) {
       drupal_add_http_header('Content-Type', $hdr_type);
     }
     print $ret;
@@ -95,7 +95,7 @@
     }
 
     foreach ($_GET as $key => $value) {
-      if ($key != 'q') {
+      if ($key != 'q' && $key != 'header') {
         $link_opts[$key] = $value;
       }
     }
@@ -167,11 +167,11 @@
                   'postgpsdata' => 'postGPSData',
                   'postincident' => 'postIncident',
                 );
-    //bad api 
+    //bad api
     //gettrafficcongestion $_GET['q'] Problem
 
     if (in_array($api, array_keys($map))) {
       $api = $map[$api];
     }
     return $api;
-  } 
+  }
