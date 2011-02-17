@@ -52,10 +52,6 @@ blog ตอนที่แล้ว [ดูภาพจากกล้อง CCT
 --------------
 1. เลือก api ที่ต้องการใช้งานจาก [Traffy Info](http://info.traffy.in.th/api/) แต่แนะนำให้ดู API จากเมนูด้านบน ข้างๆเมนู "หน้าแรก" หรือ ตาม ข้างล่าง
 ```
-
-สิ่งที่ผมไม่ได้ทำ
--------------
-* เวลาที่ api error ผมไม่ได้
     $map = array( 'getcctvimg' => 'getcctvimg',
                   'getcctv' => 'getCCTV',
                   'getvms' => 'getVMS',
@@ -71,6 +67,12 @@ blog ตอนที่แล้ว [ดูภาพจากกล้อง CCT
                   'postincident' => 'postIncident',
                 );
 ```
+
+สิ่งที่ผมไม่ได้ทำ
+-------------
+
+1.  ผมไม่ได้ handle เวลาที่ api error
+
 2. request api ไปที่ path http://www.together.in.th/drupal/traffy/wrapper/(api-to-call)  ตัวอย่างเช่น
 
 >   - [http://www.together.in.th/drupal/traffy/wrapper/getcctv](http://www.together.in.th/drupal/traffy/wrapper/getcctv)
