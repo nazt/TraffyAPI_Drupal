@@ -39,16 +39,20 @@
     $api_to_call = api_transform($api_to_call);
     $traffy  = get_api_info();
     $link_opts = array_merge(array('api' => $api_to_call), get_link_option());
+
     if (!isset($_GET['format'])) {
       $_GET['format'] = "JSON";
     }
+    
+    //print_r (drupal_get_query_parameters($link_opts));
+    $_GET['format'] = strtoupper($_GET['format']);
 
     foreach ($_GET as $key => $value) {
       if ($key != 'q') {
         $link_opts[$key] = $value;
       }
     }
-
+    
     $url = url($traffy['service'], array('query' => $link_opts));
     $options = array(
       'headers' => get_http_headers(),
