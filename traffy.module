@@ -47,7 +47,7 @@
     $_GET['format'] = strtoupper($_GET['format']);
 
     foreach ($_GET as $key => $value) {
-      if ($key != 'q' && $q != 'header') {
+      if ($key != 'q' && $key != 'header') {
         $link_opts[$key] = $value;
       }
     }
