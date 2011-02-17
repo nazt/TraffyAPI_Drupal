@@ -44,7 +44,6 @@
       $_GET['format'] = "JSON";
     }
     
-    //print_r (drupal_get_query_parameters($link_opts));
     $_GET['format'] = strtoupper($_GET['format']);
 
     foreach ($_GET as $key => $value) {
@@ -54,6 +53,10 @@
     }
     
     $url = url($traffy['service'], array('query' => $link_opts));
+
+    //BADLY FIX drupal's url() problem
+    $url = str_replace("%2C", ',', $url);
+
     $options = array(
       'headers' => get_http_headers(),
       'method' => 'POST',
@@ -62,6 +65,7 @@
       'timeout' => 10.0,
       'context' => NULL,
     );
+
     $ret = '';
     $res = drupal_http_request($url, $options);
     if ($res->code != 200 ) {
