@@ -147,18 +147,21 @@
                   'getcctv' => 'getCCTV',
                   'getvms' => 'getVMS',
                   'getvmsimg' => 'getvmsimg',
-                  'getincident', => 'getIncident',
-                  'getlinkallinfo' => 'getLinkAllInfo',
+                  'getincident' => 'getIncident',
+                  'getlinkallinfo' => 'getLinkALLInfo',
                   'getrainforecast' => 'getRainForecast',
-                  'getTrafficCongestion' => 'getCL',
+                  'gettrafficcongestion' => 'getCL',
                   'getlinkinfo' => 'getLinkInfo',
                   'gettraveltime' => 'getTravelTime',
                    //postAPI
                   'postgpsdata' => 'postGPSData',
                   'postincident' => 'postIncident',
                 );
+    //bad api 
+    //gettrafficcongestion $_GET['q'] Problem
+
     if (in_array($api, array_keys($map))) {
       $api = $map[$api];
     }
     return $api;
-  }
+  } 
