@@ -97,6 +97,7 @@
     }
     return $link_opts;
   }
+
   function get_api_info() {
     $api_service = variable_get('traffy_service_url', 'http://athena.traffy.in.th/apis/apitraffy.php');
     $apikey = variable_get('traffy_apikey', '');
@@ -107,6 +108,7 @@
                 );
     return $traffy;
   }
+
   function get_http_headers () {
     $host = $_SERVER['SERVER_NAME'];
     $headers = array(
