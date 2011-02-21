@@ -30,6 +30,46 @@
     return $items;
   }
 
+  function api_cache_get($api_to_call) {
+    $ret = FALSE;
+    $cache_info = get_cache_info($api_to_call);
+    if ($cache_info) {
+      if ($result = cache_get($cache_info['cid'])) {
+        $ret = $result->data;
+      }
+    }
+    return $ret;
+  }
+
+  function api_cache_set($api_to_call, $data) {
+    $cache_info = get_cache_info($api_to_call);
+    cache_set($cache_info['cid'], $data, 'cache', $cache_info['expire']);
+  }
+
+  function request_traffy_api($url, $api_to_call) {
+    $options = array(
+      'headers' => get_http_headers(),
+      'method' => 'POST',
+      'data' => NULL,
+      'max_redirects' => 3,
+      'timeout' => 10.0,
+      'context' => NULL,
+    );
+
+    $ret = '';
+    $res = drupal_http_request($url, $options);
+    if ($res->code != 200 ) {
+      drupal_set_message(print_r($res, 1), 'error');
+      drupal_set_message($res->error, 'error');
+      $ret = 'error '. $res->code .': ' . $res->error;
+    }
+    else {
+      $ret = $res->data;
+    }
+
+    return $ret;
+  }
+
   function api_wrapper($api_to_call) {
     if (!allow_api($api_to_call)) {
       drupal_set_message($api_to_call . ' is not allowed.', 'error');
@@ -54,33 +94,34 @@
 
     $url = url($traffy['service'], array('query' => $link_opts));
 
+
     //BADLY FIX drupal's url() problem
     $url = str_replace("%2C", ',', $url);
-
-    $options = array(
-      'headers' => get_http_headers(),
-      'method' => 'POST',
-      'data' => NULL,
-      'max_redirects' => 3,
-      'timeout' => 10.0,
-      'context' => NULL,
-    );
-
-    $ret = '';
-    $res = drupal_http_request($url, $options);
-    if ($res->code != 200 ) {
-      drupal_set_message(print_r($res, 1), 'error');
-      drupal_set_message($res->error, 'error');
-      $ret = 'error '. $res->code .': ' . $res->error;
+    //print $url;
+    if ($format != "JS" && $cached = api_cache_get($api_to_call)) {
+      $ret = $cached;
+      watchdog('traffy_cache','CACHE HIT');
     }
     else {
-      $ret = $res->data;
+      $ret = request_traffy_api($url, $api_to_call);
+      api_cache_set($api_to_call, $ret);
+      watchdog('traffy_cache','CACHE MISS');
     }
 
-    $arg_hdr = arg(3)? arg(3) : $_GET['header'];
+
+    if (isset($_GET['header'])) {
+      $header = $_GET['header'];
+    }
+    else {
+      $header = 'html';
+    }
+
+    $arg_hdr = arg(3)? arg(3) : $header;
+
     if ($hdr_type = get_header_mapping($arg_hdr)) {
       drupal_add_http_header('Content-Type', $hdr_type);
     }
+
     print $ret;
 
   }
@@ -174,4 +215,18 @@
       $api = $map[$api];
     }
     return $api;
+  }
+
+  function get_cache_info($api_to_call) {
+    $api_to_call = strtolower($api_to_call);
+    $cachable = array(
+                'getcctv' => array('cid' => 'traffy_'.$api_to_call, 'type' => 'cache_page', 'expire' => 5*60),
+                'getcctvimg' => array('cid' => 'traffy_'.$api_to_call, 'type' => 'cache_page', 'expire' => 5*60),
+                );
+    $cache = FALSE;
+    if (in_array($api_to_call, array_keys($cachable))) {
+      $cache = $cachable[$api_to_call];
+    }
+
+    return $cache;
   }
