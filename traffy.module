@@ -44,7 +44,7 @@
       $_GET['format'] = "JSON";
     }
 
-    $_GET['format'] = strtoupper($_GET['format']);
+    $format = $_GET['format'] = strtoupper($_GET['format']);
 
     foreach ($_GET as $key => $value) {
       if ($key != 'q' && $key != 'header') {
