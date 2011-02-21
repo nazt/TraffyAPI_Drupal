@@ -100,12 +100,12 @@
     //print $url;
     if ($format != "JS" && $cached = api_cache_get($api_to_call)) {
       $ret = $cached;
-      watchdog('traffy_cache','CACHE HIT');
+      watchdog('traffy_cache','CACHE HIT :: '. $api_to_call);
     }
     else {
       $ret = request_traffy_api($url, $api_to_call);
       api_cache_set($api_to_call, $ret);
-      watchdog('traffy_cache','CACHE MISS');
+      watchdog('traffy_cache','CACHE MISS :: '. $api_to_call);
     }
 
 
