@@ -42,6 +42,11 @@ blog ตอนที่แล้ว [ดูภาพจากกล้อง CCT
 2. (อาจจะ) ไม่ต้องปวดหัวกับ ปัญหา referrer
 3. map api ให้ตรงกับหัวเอกสาร (เช่น 'getTrafficCongestion' =&gt; 'getCL', 'getCCTVimg' =&gt; 'getcctvimg') แก้ไขปัญหาหัวเอกสารไม่ตรงกับ api
 4. ปรับให้ใช้เรียก api โดยไม่สนใจอักขระตัวเล็กตัวใหญ่ (case insensitive) ทำให้สามารถเรียก getcctv, getcctvimg, gettrafficcongestion ได้เลย
+5. cache traffy api  ดังนี้
+    cache api เป็นเวลา 5 นาที ดังนี้
+    'getcctv' => array('cid' => 'traffy_'.$api_to_call, 'type' => 'cache_page', 'expire' => 5*60),
+    'getcctvimg' => array('cid' => 'traffy_'.$api_to_call, 'type' => 'cache_page', 'expire' => 5*60),
+    );
 
 สำหรับแนวทางการพัฒนาต่อไป
 --------------
@@ -111,7 +116,8 @@ api ที่มีปัญหา
 สิ่งที่ผมไม่ได้ทำ
 -------
 * ไม่ handle เหตุการณ์เมื่อมี error
-* ไม่ได้ทำ cache
+
+
 
 ลองใช้งาน
 -------
