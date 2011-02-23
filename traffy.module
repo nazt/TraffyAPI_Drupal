@@ -35,6 +35,7 @@
     $cache_info = get_cache_info($api_to_call);
     if ($cache_info) {
       if ($result = cache_get($cache_info['cid'])) {
+        watchdog('traffy_cache', 'CACHE HIT :: '. $cache_info['cid']);
         $ret = $result->data;
       }
     }
@@ -43,16 +44,19 @@
 
   function api_cache_set($api_to_call, $data) {
     $cache_info = get_cache_info($api_to_call);
+    //drupal_set_message('cache_set: '.$api_to_call);
+    //drupal_set_message('cache_set: '.$data);
     cache_set($cache_info['cid'], $data, 'cache', $cache_info['expire']);
   }
 
-  function request_traffy_api($url, $api_to_call) {
+  function request_traffy_api($url, $api_to_call, $CACHABLE = TRUE) {
+    //drupal_set_message("REQUEST. ". $api_to_call. $url );
     $options = array(
       'headers' => get_http_headers(),
       'method' => 'POST',
       'data' => NULL,
       'max_redirects' => 3,
-      'timeout' => 10.0,
+      'timeout' => 30.0,
       'context' => NULL,
     );
 
@@ -65,8 +69,11 @@
     }
     else {
       $ret = $res->data;
+      if ($CACHABLE && get_cache_info($api_to_call)) {
+        api_cache_set($api_to_call, $ret);
+        watchdog('traffy_cache', 'CACHE SET :: '. $api_to_call);
+      }
     }
-
     return $ret;
   }
 
@@ -97,17 +104,29 @@
 
     //BADLY FIX drupal's url() problem
     $url = str_replace("%2C", ',', $url);
-    //print $url;
-    if ($format != "JS" && $cached = api_cache_get($api_to_call)) {
-      $ret = $cached;
-      watchdog('traffy_cache','CACHE HIT :: '. $api_to_call);
+
+    $nocache = empty($_GET['nocache'])? FALSE: (($_GET['nocache']==1)? TRUE: FALSE);
+
+    if ($nocache || $format == "JS") {
+      drupal_add_http_header('Cache-Control', 'no-cache, must-revalidate', TRUE);
+      watchdog('traffy_cache', 'FRESH CACHE:: '. $api_to_call);
+      //NO NEED (TO SET CACHE)
+      $ret = request_traffy_api($url, $api_to_call, FALSE);
     }
     else {
-      $ret = request_traffy_api($url, $api_to_call);
-      api_cache_set($api_to_call, $ret);
-      watchdog('traffy_cache','CACHE MISS :: '. $api_to_call);
+      drupal_add_http_header('Cache-Control', 'public');
+      drupal_add_http_header('Cache-Control', 'max-age=300', TRUE);
+      $cached = api_cache_get($api_to_call);
+      if ($cached) {
+        $ret = $cached;
+        //watchdog('traffy_cache', 'CACHE HIT :: '. $api_to_call);
+      }
+      else {
+        $ret = request_traffy_api($url, $api_to_call);
+        watchdog('traffy_cache', 'CACHE EXPIRE OR NOT FOUND :: '. $api_to_call);
+        drupal_set_message('traffy_cache'. 'CACHE EXPIRE OR NOT FOUND :: '. $api_to_call, 'warning');
+      }
     }
-
 
     if (isset($_GET['header'])) {
       $header = $_GET['header'];
@@ -178,6 +197,7 @@
                   'image' => 'image/jpeg',
                   'png' => 'image/png',
                   'jpeg' => 'image/jpeg',
+                  'gif' => 'image/gif',
                   'html' => 'text/html',
                   'xml' => 'text/xml',
                   'javascript' => 'application/javascript',
@@ -186,6 +206,7 @@
                 );
 
     $mapping_status = FALSE;
+
     if (in_array($type, array_keys($map))) {
       $mapping_status = $map[$type];
     }
@@ -218,13 +239,32 @@
   }
 
   function get_cache_info($api_to_call) {
+    $cache_uid = $_GET;
+
     $api_to_call = strtolower($api_to_call);
+    $cache_uid['api'] = $api_to_call;
+
+    unset($cache_uid['q']);
+    unset($cache_uid['nocache']);
+    unset($cache_uid['header']);
+
+    if (empty($cache_uid['format'])) {
+      $cache_uid['format'] = 'json';
+    }
+
+    $c_text = "";
+    foreach ($cache_uid as $format => $value) {
+      $c_text .= "_" . $format . "_" . $value;
+    }
+
+    $cid = 'traffy_'.$api_to_call . $c_text;
     $cachable = array(
-                'getcctv' => array('cid' => 'traffy_'.$api_to_call, 'type' => 'cache_page', 'expire' => 5*60),
-                'getcctvimg' => array('cid' => 'traffy_'.$api_to_call, 'type' => 'cache_page', 'expire' => 5*60),
+                'getcctv' => array('cid' => $cid, 'type' => 'cache', 'expire' => 5*60),
+                'getcctvimg' => array('cid' => $cid, 'type' => 'cache', 'expire' => 5*60),
                 );
     $cache = FALSE;
-    if (in_array($api_to_call, array_keys($cachable))) {
+
+    if (!empty($c_text) && in_array($api_to_call, array_keys($cachable))) {
       $cache = $cachable[$api_to_call];
     }
 
