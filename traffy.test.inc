@@ -39,7 +39,8 @@ function test_api($api_to_call) {
             *  Return javascript code,,, : (((
             *
             */
-          $ret = "<script>
+          $ret = sprintf("<a href='%s'>%s</a>", "http://www.together.in.th/see-all-cctv-camera-bangkok-traffy-wrapper-api-jquery-json/", "ดูกล้อง CCTV ทั่วกรุงเทพ ด้วย Traffy API [Wrapper/Proxy] + jQuery + JSONP Version ใหม่");
+          $ret .= "<script>
             jQuery(document).ready(function() {
               jQuery('#content').append('<div id=\'traffy\'> <div class=\'loading\'>Loading</div> </div>');
               var c = ". $raw_json ."

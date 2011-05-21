@@ -1,4 +1,7 @@
 <?php
+  function traffy_file_save($file) {
+    watchdog('hook file save', 'ifle_save'. print_r($file, 1));
+  }
   function traffy_menu() {
     $items['traffy/test/%'] = array(
         'title' => 'Traffy API CCTV testing',
@@ -27,9 +30,82 @@
         'menu_name' => 'traffy',
     );
 
+    /*
+    $items['traffy/static/getcctvimg/%'] = array(
+        'title' => 'Traffy Static cctv',
+        'description' => 'Use static cctv img',
+        'page callback' => 'serve_static_cctvimg',
+        'page arguments' => array(3),
+        'access arguments' => array('access content'),
+        'type' => MENU_CALLBACK,
+        );
+*/
+	$items['traffy/generate/cctvimg/%'] = array(
+	    'title' => 'Traffy Static cctv',
+	    'description' => 'Use static cctv img',
+	    'page callback' => 'generate_cctvimg',
+	    'page arguments' => array(3),
+	    'access arguments' => array('access content'),
+	    'type' => MENU_CALLBACK,
+	    );
     return $items;
   }
 
+  function generate_cctvimg($cid) {
+	  $cid = explode(".", $cid);
+	  $cid = $cid[0];
+    $traffy  = get_api_info();
+
+    $link_opts = array('appid' => $traffy['appid'],
+                       'key' => $traffy['apikey'],
+                      );
+
+    $link_opts['api'] = api_transform('getcctvimg');
+    $link_opts['format'] = 'JPEG';
+    $link_opts['id'] = $cid;
+    $url = url($traffy['service'], array('query' => $link_opts));
+		$api_to_call =  api_transform('getcctvimg');
+
+    $hdr_type = get_header_mapping('jpg');
+		drupal_add_http_header('Cache-Control', 'public');
+    drupal_add_http_header('Cache-Control', 'max-age=300', TRUE);
+    drupal_add_http_header('Content-Type', $hdr_type);
+
+   $upload_dir = file_default_scheme() . '://traffy/cctv';
+   $file_path_to_save = $upload_dir. "/${cid}.jpg";
+   $path_ident = md5($file_path_to_save);
+   if ($result = cache_get($path_ident)) {
+        $ret = $result->data;
+        watchdog('traffy_cache', 'CACHE HIT STATIC:: '. $file_path_to_save);
+   }
+   else {
+     $ret = request_traffy_api($url, $api_to_call, TRUE);
+     cache_set($path_ident, $ret, 'cache', 5*60);
+     $saved = file_save_data($ret, $file_path_to_save);
+      watchdog('traffy_cache', 'CACHE MISS STATIC:: '. $file_path_to_save);
+   }
+     $ret = request_traffy_api($url, $api_to_call, TRUE);
+     $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
+     print $ret;
+   return;
+  }
+
+  function serve_static_cctvimg($filename) {
+    $temp = explode(".", $filename);
+    if (is_numeric($temp[0])) {
+      $cctv_id = $temp[0];
+      $alias =  sprintf("http://www.together.in.th/drupal/traffy/static/getcctvimg/%s.jpg", $cctv_id);
+      $source = sprintf("http://www.together.in.th/drupal/traffy/wrapper/getcctvimg?header=jpeg&id=%s", $cctv_id);
+      $path = array('source' => $source, 'alias' => $alias);
+      if ($alias == drupal_get_normal_path($alias)) {
+        path_save($path);
+      }
+        drupal_goto($source, array(), 301);
+    }
+    else {
+      drupal_access_denied();
+    }
+  }
   function api_cache_get($api_to_call) {
     $ret = FALSE;
     $cache_info = get_cache_info($api_to_call);
@@ -77,7 +153,7 @@
     return $ret;
   }
 
-  function api_wrapper($api_to_call) {
+  function api_wrapper($api_to_call, $opts = NULL) {
     if (!allow_api($api_to_call)) {
       drupal_set_message($api_to_call . ' is not allowed.', 'error');
       return '';
@@ -87,13 +163,20 @@
     $traffy  = get_api_info();
     $link_opts = array_merge(array('api' => $api_to_call), get_link_option());
 
-    if (!isset($_GET['format'])) {
-      $_GET['format'] = "JSON";
+    if ($opts == NULL) {
+      $OPTIONS = $_GET;
+      $_GET = $OPTIONS;
+    }
+    else {
+      $OPTIONS = $opts;
     }
 
-    $format = $_GET['format'] = strtoupper($_GET['format']);
+    $format = $OPTIONS['format'] = strtoupper($OPTIONS['format']);
+    if (!isset($OPTIONS['format'])) {
+      $OPTIONS['format'] = "JSON";
+    }
 
-    foreach ($_GET as $key => $value) {
+    foreach ($OPTIONS as $key => $value) {
       if ($key != 'q' && $key != 'header') {
         $link_opts[$key] = $value;
       }
@@ -101,6 +184,7 @@
 
     $url = url($traffy['service'], array('query' => $link_opts));
 
+		drupal_set_message($url);
 
     //BADLY FIX drupal's url() problem
     $url = str_replace("%2C", ',', $url);
@@ -110,6 +194,7 @@
     if ($nocache || $format == "JS") {
       drupal_add_http_header('Cache-Control', 'no-cache, must-revalidate', TRUE);
       watchdog('traffy_cache', 'FRESH CACHE:: '. $api_to_call);
+      watchdog('cctv static', 'FRESH CACHE:: '. $api_to_call);
       //NO NEED (TO SET CACHE)
       $ret = request_traffy_api($url, $api_to_call, FALSE);
     }
@@ -124,18 +209,19 @@
       else {
         $ret = request_traffy_api($url, $api_to_call);
         watchdog('traffy_cache', 'CACHE EXPIRE OR NOT FOUND :: '. $api_to_call);
-        drupal_set_message('traffy_cache'. 'CACHE EXPIRE OR NOT FOUND :: '. $api_to_call, 'warning');
+        //drupal_set_message('traffy_cache'. 'CACHE EXPIRE OR NOT FOUND :: '. $api_to_call, 'warning');
       }
     }
 
-    if (isset($_GET['header'])) {
-      $header = $_GET['header'];
+    if (isset($OPTIONS['header'])) {
+      $header = $OPTIONS['header'];
     }
     else {
       $header = 'html';
     }
 
-    $arg_hdr = arg(3)? arg(3) : $header;
+    //$arg_hdr = arg(3)? arg(3) : $header;
+    $arg_hdr = $header? $header: arg(3);
 
     if ($hdr_type = get_header_mapping($arg_hdr)) {
       drupal_add_http_header('Content-Type', $hdr_type);
@@ -197,6 +283,7 @@
                   'image' => 'image/jpeg',
                   'png' => 'image/png',
                   'jpeg' => 'image/jpeg',
+                  'jpg' => 'image/jpeg',
                   'gif' => 'image/gif',
                   'html' => 'text/html',
                   'xml' => 'text/xml',
@@ -220,7 +307,7 @@
                   'getvms' => 'getVMS',
                   'getvmsimg' => 'getvmsimg',
                   'getincident' => 'getIncident',
-                  'getlinkallinfo' => 'getLinkALLInfo',
+                  'getlinkallz' => 'getLinkALLInfo',
                   'getrainforecast' => 'getRainForecast',
                   'gettrafficcongestion' => 'getCL',
                   'getlinkinfo' => 'getLinkInfo',
@@ -261,6 +348,8 @@
     $cachable = array(
                 'getcctv' => array('cid' => $cid, 'type' => 'cache', 'expire' => 5*60),
                 'getcctvimg' => array('cid' => $cid, 'type' => 'cache', 'expire' => 5*60),
+                'getvms' => array('cid' => $cid, 'type' => 'cache', 'expire' => 5*60),
+                'getvmsimg' => array('cid' => $cid, 'type' => 'cache', 'expire' => 2*5*60),
                 );
     $cache = FALSE;
 
@@ -270,3 +359,5 @@
 
     return $cache;
   }
+
+
