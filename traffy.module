@@ -4,40 +4,39 @@
   }
   function traffy_menu() {
     $items['traffy/test/%'] = array(
-        'title' => 'Traffy API CCTV testing',
-        'description' => 'Testing traffy CCTV api on drupal7',
-        'page callback' => 'test_api',
-        'page arguments' => array(2),
-        'file' => 'traffy.test.inc',
-        'access arguments' => array('access content'),
-        'type' => MENU_CALLBACK,
+      'title' => 'Traffy API CCTV testing',
+      'description' => 'Testing traffy CCTV api on drupal7',
+      'page callback' => 'test_api',
+      'page arguments' => array(2),
+      'file' => 'traffy.test.inc',
+      'access arguments' => array('access content'),
+      'type' => MENU_CALLBACK,
     );
     $items['traffy/wrapper/%'] = array(
-        'title' => 'Traffy api wrapper',
-        'description' => 'Wrap them in!!',
-        'page callback' => 'api_wrapper',
-        'page arguments' => array(2),
-        'access arguments' => array('access content'),
-        'type' => MENU_CALLBACK,
+      'title' => 'Traffy api wrapper',
+      'description' => 'Wrap them in!!',
+      'page callback' => 'api_wrapper',
+      'page arguments' => array(2),
+      'access arguments' => array('access content'),
+      'type' => MENU_CALLBACK,
     );
     $items['admin/traffy/settings'] = array(
-        'title' => 'Traffy API configuration',
-        'description' => 'Testing traffy api with drupal7',
-        'page callback' => 'drupal_get_form',
-        'page arguments' => array('traffy_admin_settings'),
-        'access arguments' => array('administer site configuration'),
-        'file' => 'traffy.admin.inc',
-        'menu_name' => 'traffy',
+      'title' => 'Traffy API configuration',
+      'description' => 'Testing traffy api with drupal7',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('traffy_admin_settings'),
+      'access arguments' => array('administer site configuration'),
+      'file' => 'traffy.admin.inc',
+      'menu_name' => 'traffy',
     );
-
-	$items['traffy/generate/cctvimg/%'] = array(
+  	$items['traffy/generate/cctvimg/%'] = array(
 	    'title' => 'Traffy Static cctv',
 	    'description' => 'Use static cctv img',
 	    'page callback' => 'generate_cctvimg',
 	    'page arguments' => array(3),
 	    'access arguments' => array('access content'),
 	    'type' => MENU_CALLBACK,
-	    );
+    );
     return $items;
   }
 
@@ -46,9 +45,10 @@
     $cid = $cid[0];
     $traffy  = get_api_info();
 
-    $link_opts = array('appid' => $traffy['appid'],
-                       'key' => $traffy['apikey'],
-                      );
+    $link_opts = array(
+      'appid' => $traffy['appid'],
+      'key' => $traffy['apikey'],
+    );
 
     $link_opts['api'] = api_transform('getcctvimg');
     $link_opts['format'] = 'JPEG';
@@ -61,32 +61,32 @@
     drupal_add_http_header('Cache-Control', 'max-age=100', TRUE);
     drupal_add_http_header('Content-Type', $hdr_type);
 
-   $upload_dir = file_default_scheme() . '://traffy/cctv'; 
-   $file_path_to_save = $upload_dir. "/${cid}.jpg";
-   $path_ident = md5($file_path_to_save);
+    $upload_dir = file_default_scheme() . '://traffy/cctv'; 
+    $file_path_to_save = $upload_dir. "/${cid}.jpg";
+    $path_ident = md5($file_path_to_save);
 
-   $use_cache = FALSE;
-   if ($use_cache && $result = cache_get($path_ident)) {
-        $ret = $result->data;
-        $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
-        watchdog('traffy_generator_cache', 'CACHE HIT STATIC:: '. $file_path_to_save);
-   }
-   else {
-     $ret = request_traffy_api($url, $api_to_call, TRUE);
-     cache_set($path_ident, $ret, 'cache', 60);
-       $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
-       watchdog('traffy_generator_cache', 'CACHE MISS STATIC:: '. $file_path_to_save);
-   }
+    $use_cache = FALSE;
+    if ($use_cache && $result = cache_get($path_ident)) {
+      $ret = $result->data;
+      $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
+      watchdog('traffy_generator_cache', 'CACHE HIT STATIC:: '. $file_path_to_save);
+    }
+    else {
+      $ret = request_traffy_api($url, $api_to_call, TRUE);
+      cache_set($path_ident, $ret, 'cache', 60);
+      $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
+      watchdog('traffy_generator_cache', 'CACHE MISS STATIC:: '. $file_path_to_save);
+    }
 
-   // File Less than 7.3kb it error!
-   if (strlen($ret) < 7311) {
-     $ret = request_traffy_api($url, $api_to_call, TRUE);
-     cache_set($path_ident, $ret, 'cache', 5*60);
-     $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
-     watchdog('traffy_generator_cache', 'CACHE ERROR:: '. $file_path_to_save);
-   }
-   print $ret;
-   return;
+    // File Less than 7.3kb it error!
+    if (strlen($ret) < 7311) {
+      $ret = request_traffy_api($url, $api_to_call, TRUE);
+      cache_set($path_ident, $ret, 'cache', 5*60);
+      $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
+      watchdog('traffy_generator_cache', 'CACHE ERROR:: '. $file_path_to_save);
+    }
+    print $ret;
+    return;
   }
 
   function serve_static_cctvimg($filename) {
@@ -95,7 +95,10 @@
       $cctv_id = $temp[0];
       $alias =  sprintf("http://www.together.in.th/drupal/traffy/static/getcctvimg/%s.jpg", $cctv_id);
       $source = sprintf("http://www.together.in.th/drupal/traffy/wrapper/getcctvimg?header=jpeg&id=%s", $cctv_id);
-      $path = array('source' => $source, 'alias' => $alias);
+      $path = array(
+        'source' => $source, 
+        'alias' => $alias
+      );
       if ($alias == drupal_get_normal_path($alias)) {
         path_save($path);
       }
@@ -230,9 +233,10 @@
 
   function get_link_option() {
     $traffy  = get_api_info();
-    $link_opts = array('appid' => $traffy['appid'],
-                       'key' => $traffy['apikey'],
-                      );
+    $link_opts = array(
+      'appid' => $traffy['appid'],
+      'key' => $traffy['apikey'],
+    );
     if (!isset($_GET['format'])) {
       $_GET['format'] = "JSON";
     }
@@ -249,19 +253,20 @@
     $api_service = variable_get('traffy_service_url', 'http://athena.traffy.in.th/apis/apitraffy.php');
     $apikey = variable_get('traffy_apikey', '');
     $appid= variable_get('traffy_appid', '');
-    $traffy = array('service' => $api_service,
-                 'apikey' => $apikey,
-                 'appid' => $appid,
-                );
+    $traffy = array(
+      'service' => $api_service,
+      'apikey' => $apikey,
+      'appid' => $appid,
+    );
     return $traffy;
   }
 
   function get_http_headers () {
     $host = $_SERVER['SERVER_NAME'];
     $headers = array(
-        'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-        'Host' => $host,
-        'Referer' => 'http://'.$host,
+      'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
+      'Host' => $host,
+      'Referer' => 'http://'.$host,
     );
     return $headers;
   }
@@ -276,22 +281,22 @@
   function get_header_mapping($type) {
     $type = strtolower($type);
     $map = array(
-                  'img' => 'image/jpeg',
-                  'image' => 'image/jpeg',
-                  'png' => 'image/png',
-                  'jpeg' => 'image/jpeg',
-                  'jpg' => 'image/jpeg',
-                  'gif' => 'image/gif',
-                  'html' => 'text/html',
-                  'xml' => 'text/xml',
-                  'javascript' => 'application/javascript',
-                  'js' => 'application/javascript',
-                  'json' => 'application/json',
-                );
+      'img' => 'image/jpeg',
+      'image' => 'image/jpeg',
+      'png' => 'image/png',
+      'jpeg' => 'image/jpeg',
+      'jpg' => 'image/jpeg',
+      'gif' => 'image/gif',
+      'html' => 'text/html',
+      'xml' => 'text/xml',
+      'javascript' => 'application/javascript',
+      'js' => 'application/javascript',
+      'json' => 'application/json',
+    );
 
     $mapping_status = FALSE;
-
-    if (in_array($type, array_keys($map))) {
+    $is_in_array = in_array($type, array_keys($map) );
+    if ($is_in_array) {
       $mapping_status = $map[$type];
     }
     return $mapping_status;
