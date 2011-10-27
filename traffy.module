@@ -52,8 +52,8 @@
   }
 
   function generate_cctvimg($cid) {
-	  $cid = explode(".", $cid);
-	  $cid = $cid[0];
+    $cid = explode(".", $cid);
+    $cid = $cid[0];
     $traffy  = get_api_info();
 
     $link_opts = array('appid' => $traffy['appid'],
@@ -67,26 +67,41 @@
 		$api_to_call =  api_transform('getcctvimg');
 
     $hdr_type = get_header_mapping('jpg');
-		drupal_add_http_header('Cache-Control', 'public');
-    drupal_add_http_header('Cache-Control', 'max-age=300', TRUE);
+    drupal_add_http_header('Cache-Control', 'public');
+    drupal_add_http_header('Cache-Control', 'max-age=100', TRUE);
     drupal_add_http_header('Content-Type', $hdr_type);
 
-   $upload_dir = file_default_scheme() . '://traffy/cctv';
+   $upload_dir = file_default_scheme() . '://traffy/cctv'; 
    $file_path_to_save = $upload_dir. "/${cid}.jpg";
    $path_ident = md5($file_path_to_save);
-   if ($result = cache_get($path_ident)) {
+
+   //drupal_set_message(print_r(drupal_realpath($file_path_to_save), 1));
+   $use_cache = FALSE;
+   if ($use_cache && $result = cache_get($path_ident)) {
         $ret = $result->data;
-        watchdog('traffy_cache', 'CACHE HIT STATIC:: '. $file_path_to_save);
+        $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
+        watchdog('traffy_generator_cache', 'CACHE HIT STATIC:: '. $file_path_to_save);
    }
    else {
      $ret = request_traffy_api($url, $api_to_call, TRUE);
-     cache_set($path_ident, $ret, 'cache', 5*60);
-     $saved = file_save_data($ret, $file_path_to_save);
-      watchdog('traffy_cache', 'CACHE MISS STATIC:: '. $file_path_to_save);
+     cache_set($path_ident, $ret, 'cache', 60);
+     //$saved = file_save_data($ret, $file_path_to_save);
+       $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
+       watchdog('traffy_generator_cache', 'CACHE MISS STATIC:: '. $file_path_to_save);
+     /*if (strlen($ret) >= 275) {
+     }
+     */
    }
+
+   // File Less than 7.3kb it error!
+   if (strlen($ret) < 7311) {
      $ret = request_traffy_api($url, $api_to_call, TRUE);
+     cache_set($path_ident, $ret, 'cache', 5*60);
+     //$saved = file_save_data($ret, $file_path_to_save);
      $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
-     print $ret;
+     watchdog('traffy_generator_cache', 'CACHE ERROR:: '. $file_path_to_save);
+   }
+   print $ret;
    return;
   }
 
@@ -307,7 +322,8 @@
                   'getvms' => 'getVMS',
                   'getvmsimg' => 'getvmsimg',
                   'getincident' => 'getIncident',
-                  'getlinkallz' => 'getLinkALLInfo',
+                  'getlinkallinfo' => 'getLinkALLInfo',
+                  'getlinkall' => 'getLinkALLInfo',
                   'getrainforecast' => 'getRainForecast',
                   'gettrafficcongestion' => 'getCL',
                   'getlinkinfo' => 'getLinkInfo',
