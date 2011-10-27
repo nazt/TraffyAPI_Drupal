@@ -30,16 +30,6 @@
         'menu_name' => 'traffy',
     );
 
-    /*
-    $items['traffy/static/getcctvimg/%'] = array(
-        'title' => 'Traffy Static cctv',
-        'description' => 'Use static cctv img',
-        'page callback' => 'serve_static_cctvimg',
-        'page arguments' => array(3),
-        'access arguments' => array('access content'),
-        'type' => MENU_CALLBACK,
-        );
-*/
 	$items['traffy/generate/cctvimg/%'] = array(
 	    'title' => 'Traffy Static cctv',
 	    'description' => 'Use static cctv img',
@@ -75,7 +65,6 @@
    $file_path_to_save = $upload_dir. "/${cid}.jpg";
    $path_ident = md5($file_path_to_save);
 
-   //drupal_set_message(print_r(drupal_realpath($file_path_to_save), 1));
    $use_cache = FALSE;
    if ($use_cache && $result = cache_get($path_ident)) {
         $ret = $result->data;
@@ -85,19 +74,14 @@
    else {
      $ret = request_traffy_api($url, $api_to_call, TRUE);
      cache_set($path_ident, $ret, 'cache', 60);
-     //$saved = file_save_data($ret, $file_path_to_save);
        $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
        watchdog('traffy_generator_cache', 'CACHE MISS STATIC:: '. $file_path_to_save);
-     /*if (strlen($ret) >= 275) {
-     }
-     */
    }
 
    // File Less than 7.3kb it error!
    if (strlen($ret) < 7311) {
      $ret = request_traffy_api($url, $api_to_call, TRUE);
      cache_set($path_ident, $ret, 'cache', 5*60);
-     //$saved = file_save_data($ret, $file_path_to_save);
      $saved = file_save_data($ret, $file_path_to_save, FILE_EXISTS_REPLACE);
      watchdog('traffy_generator_cache', 'CACHE ERROR:: '. $file_path_to_save);
    }
@@ -135,8 +119,6 @@
 
   function api_cache_set($api_to_call, $data) {
     $cache_info = get_cache_info($api_to_call);
-    //drupal_set_message('cache_set: '.$api_to_call);
-    //drupal_set_message('cache_set: '.$data);
     cache_set($cache_info['cid'], $data, 'cache', $cache_info['expire']);
   }
 
